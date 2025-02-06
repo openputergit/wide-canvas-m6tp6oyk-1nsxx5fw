@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hackathon Update Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .neo-card {
+            background: #f0f4f8;
+            box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+            border-radius: 20px;
+        }
+        .neo-button {
+            background: linear-gradient(145deg, #e6e6e6, #ffffff);
+            box-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #ffffff;
+            transition: all 0.3s ease;
+        }
+        .neo-button:active {
+            box-shadow: inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #ffffff;
+        }
+        body {
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            min-height: 100vh;
+        }
+        .tick-green {
+            color: #22c55e;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="neo-card p-6 mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Hackathon Update Tracker</h1>
+            
+            <!-- Input Form -->
+            <form id="teamForm" class="space-y-4 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="teamName" placeholder="Team Name" class="neo-card p-3 outline-none" required>
+                    <input type="number" id="problemNumber" placeholder="Problem Statement Number" class="neo-card p-3 outline-none" required>
+                    <input type="url" id="repoLink" placeholder="GitHub Repository URL" class="neo-card p-3 outline-none" required>
+                </div>
+                <div class="flex justify-center">
+                    <button type="submit" class="neo-button px-6 py-2 rounded-lg text-gray-800 font-semibold">Add Team</button>
+                </div>
+            </form>
+
+            <!-- Control Buttons -->
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <button onclick="sortByUpdates()" class="neo-button px-4 py-2 rounded-lg text-gray-800">
+                    <i class="bi bi-sort-down"></i> Sort by Updates
+                </button>
+                <button onclick="exportData()" class="neo-button px-4 py-2 rounded-lg text-gray-800">
+                    <i class="bi bi-download"></i> Export Data
+                </button>
+            </div>
+
+            <!-- Teams Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left">
+                            <th class="p-3">Team</th>
+                            <th class="p-3">Problem #</th>
+                            <th class="p-3">Repo</th>
+                            <th class="p-3">5PM</th>
+                            <th class="p-3">8PM</th>
+                            <th class="p-3">11PM</th>
+                            <th class="p-3">2AM</th>
+                            <th class="p-3">5AM</th>
+                            <th class="p-3">8AM</th>
+                            <th class="p-3">11AM</th>
+                            <th class="p-3">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamsTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let teams = [];
+        const checkpoints = ['5PM', '8PM', '11PM', '2AM', '5AM', '8AM', '11AM'];
+        
+        document.getElementById('teamForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const team = {
+                name: document.getElementById('teamName').value,
+                problemNumber: document.getElementById('problemNumber').value,
+                repoLink: document.getElementById('repoLink').value,
+                updates: new Array(7).fill(false),
+                totalUpdates: 0
+            };
+            teams.push(team);
+            this.reset();
+            updateTable();
+            startTracking(team);
+        });
+
+        function startTracking(team) {
+            // Simulate GitHub API checking (in real implementation, use actual GitHub API)
+            setInterval(() => {
+                checkGithubUpdates(team);
+            }, 5000); // Check every 5 seconds (adjust as needed)
+        }
+
+        function checkGithubUpdates(team) {
+            // Simulate repository check (replace with actual GitHub API call)
+            const now = new Date();
+            const startTime = new Date();
+            startTime.setHours(14, 0, 0); // 2 PM start time
+
+            checkpoints.forEach((checkpoint, index) => {
+                const checkpointTime = new Date(startTime);
+                checkpointTime.setHours(checkpointTime.getHours() + (index + 3) * 3);
+                
+                if (now >= checkpointTime && !team.updates[index]) {
+                    // Simulate random updates (replace with actual commit check)
+                    if (Math.random() > 0.5) {
+                        team.updates[index] = true;
+                        team.totalUpdates++;
+                        updateTable();
+                    }
+                }
+            });
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('teamsTable');
+            tbody.innerHTML = '';
+            
+            teams.forEach(team => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="p-3">${team.name}</td>
+                    <td class="p-3">${team.problemNumber}</td>
+                    <td class="p-3"><a href="${team.repoLink}" target="_blank" class="text-blue-600 hover:underline">Repo</a></td>
+                    ${team.updates.map(update => `
+                        <td class="p-3 text-center">
+                            <i class="bi ${update ? 'bi-check-circle-fill tick-green' : 'bi-circle text-gray-300'}"></i>
+                        </td>
+                    `).join('')}
+                    <td class="p-3 text-center font-bold">${team.totalUpdates}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function sortByUpdates() {
+            teams.sort((a, b) => b.totalUpdates - a.totalUpdates);
+            updateTable();
+        }
+
+        function exportData() {
+            const data = teams.map(team => ({
+                TeamName: team.name,
+                ProblemNumber: team.problemNumber,
+                RepositoryLink: team.repoLink,
+                Updates: team.updates,
+                TotalUpdates: team.totalUpdates
+            }));
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hackathon-updates.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
